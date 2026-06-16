@@ -1,0 +1,11 @@
+{
+  "rules": {
+    "telemetry": {
+      ".read": true,
+      ".write": true,
+      "$device": {
+        ".validate": "newData.hasChild('lat') && newData.hasChild('lng')"
+      }
+    }
+  }
+}

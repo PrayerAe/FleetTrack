@@ -1,26 +1,26 @@
 #!/usr/bin/env python3
 """
-gps-sender — kirim telemetri GPS ke server FleetTrack Manado.
+gps-sender — kirim telemetri GPS ke Firebase Realtime Database (FleetTrack Manado).
 
 Program ini titik kerja REKAN (pengirim data). Ia membaca posisi GPS lalu
-mengirim JSON ke endpoint /api/telemetry milik server. Tidak perlu mengubah
-kode dashboard sama sekali — cukup arahkan API_URL ke server.
+mem-PUT JSON ke:  <FIREBASE_DB_URL>/telemetry/<DEVICE_ID>.json
+Dashboard membaca perubahan itu secara real-time. Tidak ada server yang perlu
+dijalankan/di-hosting.
 
 Dua mode:
-  MODE=demo    -> hasilkan koordinat bergerak di sekitar Manado (uji TANPA hardware)
-  MODE=serial  -> baca GPS NMEA dari port serial sungguhan (butuh pyserial + pynmea2)
+  MODE=demo    -> koordinat bergerak di sekitar Manado (uji TANPA hardware)
+  MODE=serial  -> baca GPS NMEA dari port serial (butuh pyserial + pynmea2)
 
 Konfigurasi lewat environment variable atau file .env di folder ini:
-  API_URL      WAJIB. Mis. https://fleettrack-server.onrender.com/api/telemetry
-  DEVICE_ID    id unit, default MOTOR-001 (samakan dengan daftar di server)
-  API_KEY      opsional, dikirim sebagai header x-api-key bila server memintanya
-  RATE         paket per detik (Hz), default 1
-  MODE         demo | serial (default demo)
-  SERIAL_PORT  mis. COM5 (Windows) atau /dev/ttyUSB0 (Linux)  [mode serial]
-  SERIAL_BAUD  default 9600                                    [mode serial]
+  FIREBASE_DB_URL  WAJIB. Mis. https://fleettrack-manado-default-rtdb.firebaseio.com
+  DEVICE_ID        id unit, default MOTOR-001
+  AUTH             opsional, token Firebase (ditambah sebagai ?auth=... bila diisi)
+  RATE             paket per detik (Hz), default 1
+  MODE             demo | serial (default demo)
+  SERIAL_PORT      mis. COM5 atau /dev/ttyUSB0   [mode serial]
+  SERIAL_BAUD      default 9600                   [mode serial]
 
-Jalankan:
-  python send_gps.py
+Jalankan:  python send_gps.py
 """
 import json
 import math
@@ -32,9 +32,7 @@ import urllib.error
 import urllib.request
 
 
-# ── konfigurasi ──────────────────────────────────────────────────────────────
 def load_dotenv(path=".env"):
-    """Pembaca .env sederhana (tanpa dependency)."""
     here = os.path.join(os.path.dirname(os.path.abspath(__file__)), path)
     if not os.path.exists(here):
         return
@@ -48,29 +46,32 @@ def load_dotenv(path=".env"):
 
 load_dotenv()
 
-API_URL = os.environ.get("API_URL", "http://localhost:4000/api/telemetry")
+DB_URL = os.environ.get("FIREBASE_DB_URL", "").rstrip("/")
 DEVICE_ID = os.environ.get("DEVICE_ID", "MOTOR-001")
-API_KEY = os.environ.get("API_KEY", "")
+AUTH = os.environ.get("AUTH", "")
 RATE = float(os.environ.get("RATE", "1"))
 MODE = os.environ.get("MODE", "demo").lower()
 SERIAL_PORT = os.environ.get("SERIAL_PORT", "")
 SERIAL_BAUD = int(os.environ.get("SERIAL_BAUD", "9600"))
 
+if not DB_URL:
+    sys.exit("Set FIREBASE_DB_URL di .env (mis. https://xxx-default-rtdb.firebaseio.com)")
 
-def post(packet):
-    """POST satu paket JSON ke server. Mengembalikan teks respons."""
-    body = json.dumps(packet).encode("utf-8")
-    headers = {"Content-Type": "application/json"}
-    if API_KEY:
-        headers["x-api-key"] = API_KEY
-    req = urllib.request.Request(API_URL, data=body, headers=headers, method="POST")
+
+def put(packet):
+    """PUT satu paket JSON ke /telemetry/<id>.json. Mengembalikan kode HTTP."""
+    url = f"{DB_URL}/telemetry/{packet['id']}.json"
+    if AUTH:
+        url += f"?auth={AUTH}"
+    body = json.dumps({k: v for k, v in packet.items() if k != "id"}).encode("utf-8")
+    req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"}, method="PUT")
     with urllib.request.urlopen(req, timeout=10) as resp:
-        return resp.read().decode("utf-8")
+        return resp.status
 
 
-# ── MODE DEMO: koordinat bergerak buatan ─────────────────────────────────────
+# ── MODE DEMO ────────────────────────────────────────────────────────────────
 def demo_stream():
-    lat, lng = 1.4900, 124.8380       # dekat Boulevard Manado
+    lat, lng = 1.4900, 124.8380
     heading = random.random() * 2 * math.pi
     while True:
         spd = max(0.0, 30 + random.uniform(-10, 12))
@@ -81,17 +82,13 @@ def demo_stream():
         yield {
             "id": DEVICE_ID,
             "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            "lat": round(lat, 5),
-            "lng": round(lng, 5),
-            "spd": round(spd, 1),
-            "bat": 80,
-            "sat": random.randint(6, 11),
-            "st": "rented",
+            "lat": round(lat, 5), "lng": round(lng, 5),
+            "spd": round(spd, 1), "bat": 80, "sat": random.randint(6, 11), "st": "rented",
         }
         time.sleep(1 / RATE)
 
 
-# ── MODE SERIAL: baca GPS NMEA sungguhan ─────────────────────────────────────
+# ── MODE SERIAL (GPS NMEA sungguhan) ─────────────────────────────────────────
 def serial_stream():
     try:
         import pynmea2
@@ -116,39 +113,36 @@ def serial_stream():
         lng = getattr(msg, "longitude", None)
         if not lat or not lng:
             continue
-        # batasi laju kirim sesuai RATE
         now = time.time()
         if now - last_sent < 1 / RATE:
             continue
         last_sent = now
         spd_knots = getattr(msg, "spd_over_grnd", None)
-        spd_kmh = round(float(spd_knots) * 1.852, 1) if spd_knots else 0.0
         sats = getattr(msg, "num_sats", None)
         yield {
             "id": DEVICE_ID,
             "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            "lat": round(float(lat), 5),
-            "lng": round(float(lng), 5),
-            "spd": spd_kmh,
-            "sat": int(sats) if sats else 0,
-            "st": "rented",
+            "lat": round(float(lat), 5), "lng": round(float(lng), 5),
+            "spd": round(float(spd_knots) * 1.852, 1) if spd_knots else 0.0,
+            "sat": int(sats) if sats else 0, "st": "rented",
         }
 
 
 def main():
-    print(f"gps-sender → {API_URL}")
-    print(f"  device={DEVICE_ID}  mode={MODE}  rate={RATE}Hz  auth={'on' if API_KEY else 'off'}")
+    print(f"gps-sender → {DB_URL}/telemetry/{DEVICE_ID}.json")
+    print(f"  mode={MODE}  rate={RATE}Hz  auth={'on' if AUTH else 'off'}")
     stream = serial_stream() if MODE == "serial" else demo_stream()
     sent = 0
     for packet in stream:
         try:
-            resp = post(packet)
+            code = put(packet)
             sent += 1
-            print(f"\r[{sent}] sent {packet['id']} ({packet['lat']},{packet['lng']}) spd={packet['spd']}  ← {resp}   ", end="")
+            print(f"\r[{sent}] PUT {packet['id']} ({packet['lat']},{packet['lng']}) spd={packet['spd']}  ← HTTP {code}   ", end="")
         except urllib.error.HTTPError as e:
-            print(f"\nHTTP {e.code}: {e.read().decode('utf-8', 'ignore')}")
+            print(f"\nHTTP {e.code}: {e.read().decode('utf-8', 'ignore')}  (cek rules & FIREBASE_DB_URL)")
+            time.sleep(2)
         except Exception as e:  # noqa: BLE001
-            print(f"\nGagal kirim: {e}  (cek API_URL & koneksi)")
+            print(f"\nGagal kirim: {e}  (cek FIREBASE_DB_URL & koneksi)")
             time.sleep(2)
 
 
