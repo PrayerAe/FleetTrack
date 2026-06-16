@@ -96,7 +96,7 @@ export class FleetEngine {
       m = reg
         ? seedDevice(reg)
         : {
-            device_id: t.id, model: 'Unknown', plat: '—', baseStatus: 'available', status: 'available',
+            device_id: t.id, model: '—', plat: '—', baseStatus: 'available', status: 'available',
             area: '—', street: '—', renter: null, speedLimit: 60, odometer: 0,
             lat: t.lat, lng: t.lng, spd: 0, bat: 0, sat: 0, heading: 0, online: false, lastSeen: null,
           }

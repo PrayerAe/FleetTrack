@@ -45,7 +45,7 @@ export function SimProvider({ children }: { children: ReactNode }) {
   if (!engineRef.current) engineRef.current = new FleetEngine()
   const engine = engineRef.current
 
-  const [fleet, setFleet] = useState<Motorcycle[]>(() => engine.fleet())
+  const [fleet, setFleet] = useState<Motorcycle[]>([])
   const [alerts, setAlerts] = useState<AlertItem[]>([])
   const [trails, setTrails] = useState<Record<string, LatLng[]>>({})
   const [feed, setFeed] = useState<Telemetry[]>([])
@@ -103,7 +103,8 @@ export function SimProvider({ children }: { children: ReactNode }) {
       setSimClock(new Date())
       if (!dirty.current) return
       dirty.current = false
-      setFleet(engine.fleet())
+      // B: only surface units that have actually reported real telemetry.
+      setFleet(engine.fleet().filter((m) => m.online))
       setTrails({ ...engine.trails })
       setAlerts(engine.alerts.slice())
       setFeed(feedRef.current.slice())
