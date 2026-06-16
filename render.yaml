@@ -1,0 +1,25 @@
+# Render Blueprint — deploys the FleetTrack telemetry server.
+# Render dashboard → New → Blueprint → pick this repo. Render reads this file.
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: fleettrack-server
+    runtime: node
+    rootDir: server            # the server lives in /server, not the repo root
+    plan: free                 # bump to a paid plan to avoid idle spin-down
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      # Allow the deployed dashboard to connect. Use "*" for simplicity, or set
+      # this to your exact Vercel URL, e.g. https://fleettrack.vercel.app
+      - key: CORS_ORIGIN
+        value: "*"
+      # Optional shared secret for POST /api/telemetry. Set a value in the Render
+      # dashboard (kept out of git) and hand it to your teammate as x-api-key.
+      - key: INGEST_API_KEY
+        sync: false
+      # In-memory store by default. Set to "db" + add PG*/INFLUX_* to persist.
+      - key: STORE
+        value: memory

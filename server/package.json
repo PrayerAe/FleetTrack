@@ -1,0 +1,27 @@
+{
+  "name": "fleettrack-manado-server",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "FleetTrack Manado — cloud server (MQTT/HTTP ingest → geofence/overspeed engine → Socket.IO) for real GPS telemetry",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "emulate": "node tools/device-emulator.mjs"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mqtt": "^5.7.0",
+    "socket.io": "^4.7.5"
+  },
+  "optionalDependencies": {
+    "@influxdata/influxdb-client": "^1.35.0",
+    "pg": "^8.12.0"
+  }
+}

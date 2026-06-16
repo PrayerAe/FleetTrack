@@ -1,0 +1,288 @@
+@import 'leaflet/dist/leaflet.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== Theme tokens ===== */
+:root,
+html.light {
+  color-scheme: light;
+  --surface: rgba(255, 255, 255, 0.92);
+  --surface-2: rgba(255, 255, 255, 0.65);
+  --border: rgba(15, 23, 42, 0.1);
+  --text: #0f172a;
+  --text-muted: #475569;
+  --text-faint: #64748b;
+  --shadow-card: 0 1px 0 0 rgba(255, 255, 255, 0.7) inset, 0 18px 40px -28px rgba(15, 23, 42, 0.28);
+}
+html.dark {
+  color-scheme: dark;
+  --surface: rgba(255, 255, 255, 0.035);
+  --surface-2: rgba(255, 255, 255, 0.05);
+  --border: rgba(255, 255, 255, 0.1);
+  --text: #f1f5f9;
+  --text-muted: #cbd5e1;
+  --text-faint: #94a3b8;
+  --shadow-card: 0 1px 0 0 rgba(255, 255, 255, 0.04) inset, 0 20px 50px -30px rgba(0, 0, 0, 0.9);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply font-sans antialiased;
+  color: var(--text);
+  background-attachment: fixed;
+}
+html.light body {
+  background-color: #eaeef6;
+  background-image: radial-gradient(1100px 650px at 10% -10%, rgba(124, 58, 237, 0.12), transparent 60%),
+    radial-gradient(900px 560px at 110% 2%, rgba(14, 165, 233, 0.1), transparent 55%),
+    linear-gradient(180deg, #eef2fa 0%, #e6ebf5 100%);
+}
+html.dark body {
+  background-color: #070810;
+  background-image: radial-gradient(1200px 700px at 12% -8%, rgba(124, 58, 237, 0.16), transparent 60%),
+    radial-gradient(1000px 600px at 108% 4%, rgba(14, 165, 233, 0.12), transparent 55%),
+    linear-gradient(180deg, #070810 0%, #080a14 100%);
+}
+
+/* ---------- Scrollbar ---------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
+}
+*::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.22);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.4);
+  background-clip: padding-box;
+}
+
+@layer components {
+  .glass {
+    @apply rounded-2xl backdrop-blur-xl;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+  }
+  .glass-hover {
+    @apply transition-all duration-300;
+  }
+  .glass-hover:hover {
+    border-color: color-mix(in srgb, var(--border) 180%, transparent);
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold leading-none;
+  }
+  .nav-item {
+    @apply relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200;
+    color: var(--text-faint);
+  }
+  .nav-item:hover {
+    color: var(--text);
+    background: var(--surface-2);
+  }
+  .nav-item-active,
+  .nav-item-active:hover {
+    @apply bg-gradient-to-r from-brand-violet/25 to-brand-cyan/10;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .stat-grad {
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.16), rgba(14, 165, 233, 0.08));
+  }
+  .gradient-text {
+    @apply bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-600 bg-clip-text text-transparent;
+  }
+  html.dark .gradient-text {
+    @apply from-violet-300 via-sky-300 to-cyan-200;
+  }
+  .input {
+    @apply w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-violet/20;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+  }
+  .input::placeholder {
+    color: var(--text-faint);
+  }
+  .input:focus {
+    border-color: rgba(124, 58, 237, 0.5);
+  }
+}
+
+/* =====================================================================
+   LIGHT THEME OVERRIDES
+   Remap the dark-designed utility classes when <html class="light">.
+   ===================================================================== */
+html.light .text-white { color: #0f172a !important; }
+html.light .text-slate-100 { color: #0f172a !important; }
+html.light .text-slate-200 { color: #1e293b !important; }
+html.light .text-slate-300 { color: #334155 !important; }
+html.light .text-slate-400 { color: #475569 !important; }
+html.light .text-slate-500 { color: #64748b !important; }
+html.light .text-slate-600 { color: #94a3b8 !important; }
+
+/* colored chip/text tones → darker shades readable on light surfaces */
+html.light .text-emerald-200,
+html.light .text-emerald-300 { color: #047857 !important; }
+html.light .text-rose-200,
+html.light .text-rose-300 { color: #be123c !important; }
+html.light .text-violet-200,
+html.light .text-violet-300 { color: #6d28d9 !important; }
+html.light .text-cyan-300 { color: #0e7490 !important; }
+html.light .text-sky-300 { color: #0369a1 !important; }
+html.light .text-blue-300 { color: #1d4ed8 !important; }
+html.light .text-amber-300 { color: #b45309 !important; }
+html.light .text-yellow-200 { color: #a16207 !important; }
+
+/* translucent white surfaces → translucent slate */
+html.light .bg-white\/5 { background-color: rgba(15, 23, 42, 0.045) !important; }
+html.light .bg-white\/10 { background-color: rgba(15, 23, 42, 0.07) !important; }
+html.light .bg-white\/15 { background-color: rgba(15, 23, 42, 0.1) !important; }
+html.light .bg-white\/\[0\.02\] { background-color: rgba(15, 23, 42, 0.025) !important; }
+html.light .bg-white\/\[0\.03\] { background-color: rgba(15, 23, 42, 0.035) !important; }
+html.light .bg-white\/\[0\.035\] { background-color: rgba(15, 23, 42, 0.04) !important; }
+html.light .bg-white\/\[0\.06\] { background-color: rgba(15, 23, 42, 0.06) !important; }
+html.light .hover\:bg-white\/5:hover { background-color: rgba(15, 23, 42, 0.05) !important; }
+html.light .hover\:bg-white\/10:hover { background-color: rgba(15, 23, 42, 0.08) !important; }
+html.light .odd\:bg-white\/\[0\.02\]:nth-child(odd) { background-color: rgba(15, 23, 42, 0.03) !important; }
+
+/* white borders → slate borders */
+html.light .border-white\/5 { border-color: rgba(15, 23, 42, 0.06) !important; }
+html.light .border-white\/10 { border-color: rgba(15, 23, 42, 0.1) !important; }
+html.light .border-white\/15 { border-color: rgba(15, 23, 42, 0.14) !important; }
+html.light .border-white\/20 { border-color: rgba(15, 23, 42, 0.16) !important; }
+html.light .hover\:border-white\/15:hover { border-color: rgba(15, 23, 42, 0.18) !important; }
+html.light .hover\:border-white\/20:hover { border-color: rgba(15, 23, 42, 0.2) !important; }
+
+/* ink surfaces (sidebar / topbar / overlays / console / code) → light */
+html.light .bg-ink-950 { background-color: #eef2fa !important; }
+html.light .bg-ink-950\/40 { background-color: rgba(238, 242, 250, 0.55) !important; }
+html.light .bg-ink-950\/60 { background-color: rgba(238, 242, 250, 0.75) !important; }
+html.light .bg-ink-950\/70 { background-color: rgba(248, 250, 252, 0.78) !important; }
+html.light .bg-ink-950\/80 { background-color: rgba(241, 245, 249, 0.96) !important; }
+html.light .bg-ink-900\/80 { background-color: rgba(250, 251, 253, 0.86) !important; }
+html.light .bg-ink-900\/85 { background-color: rgba(255, 255, 255, 0.88) !important; }
+html.light .bg-ink-850 { background-color: #ffffff !important; }
+html.light .bg-ink-850\/95 { background-color: rgba(255, 255, 255, 0.97) !important; }
+
+/* keep focus ring subtle */
+html.light *:focus { outline: none; }
+
+/* ---------- Leaflet dark theme + smooth markers ---------- */
+.leaflet-container {
+  background: #0a0e1a;
+  font-family: inherit;
+}
+html.light .leaflet-container {
+  background: #e3e9f2;
+}
+.leaflet-tile {
+  filter: brightness(0.96) contrast(1.03) saturate(1);
+}
+/* Smoothly glide vehicle markers between 1 Hz telemetry ticks */
+.fleet-marker {
+  transition: transform 1s linear;
+  will-change: transform;
+}
+.leaflet-marker-icon.fleet-marker {
+  transition: transform 1s linear;
+}
+/* Disable the glide transition while the map is zooming to avoid lag-follow */
+.leaflet-zoom-anim .fleet-marker {
+  transition: none !important;
+}
+.leaflet-control-zoom a {
+  background: rgba(15, 18, 34, 0.9) !important;
+  color: #cbd5e1 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+.leaflet-control-zoom a:hover {
+  background: rgba(31, 41, 71, 0.95) !important;
+}
+.leaflet-control-attribution {
+  background: rgba(8, 10, 20, 0.7) !important;
+  color: #64748b !important;
+}
+.leaflet-control-attribution a {
+  color: #94a3b8 !important;
+}
+.leaflet-popup-content-wrapper {
+  background: rgba(15, 18, 34, 0.96);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  backdrop-filter: blur(12px);
+}
+.leaflet-popup-tip {
+  background: rgba(15, 18, 34, 0.96);
+}
+.leaflet-popup-content {
+  margin: 12px 14px;
+  font-size: 12px;
+}
+
+/* On-map vehicle speed labels (permanent tooltips) */
+.leaflet-tooltip.vehicle-label {
+  background: rgba(8, 10, 20, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #e2e8f0;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 7px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+}
+.leaflet-tooltip.vehicle-label::before {
+  display: none !important;
+}
+
+/* Pulsing GPS dot for vehicles */
+.gps-dot {
+  position: relative;
+}
+.gps-dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  border: 2px solid currentColor;
+  animation: pulse-ring 1.8s ease-out infinite;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.7);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+}

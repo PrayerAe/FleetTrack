@@ -1,0 +1,4 @@
+# Mode demo TIDAK butuh dependency apa pun (pakai pustaka standar Python).
+# Pasang paket di bawah HANYA bila memakai MODE=serial (GPS NMEA sungguhan):
+pyserial>=3.5
+pynmea2>=1.19.0

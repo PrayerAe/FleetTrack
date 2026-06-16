@@ -1,0 +1,24 @@
+# Only the built dashboard (dist/) is served by Vercel. Keep everything else —
+# especially AI config and proposal/paper artifacts — out of the upload.
+node_modules
+dist
+.vercel
+
+# Editor / AI tooling
+.claude
+
+# Proposal & paper artifacts (do not publish)
+*.docx
+*.pdf
+*.md
+fig*.png
+
+# Backend, device sender, and tooling are not part of the static site
+server
+gps-sender
+scripts
+
+# misc
+_*.txt
+*.code-workspace
+.DS_Store
