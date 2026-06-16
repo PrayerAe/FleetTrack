@@ -1,4 +1,7 @@
-# Buatan Dari AI
+# 📡 Cara Kirim Data GPS ke Dashboard FleetTrack
+
+Kirim data GPS dalam bentuk **JSON** ke alamat di bawah; dashboard menampilkannya
+real-time. Tidak perlu install/SDK — cukup **HTTP + JSON**.
 
 ## 1. Endpoint
 ```
@@ -32,3 +35,8 @@ curl -X PUT "https://fleettrack-manado-ecbb8-default-rtdb.asia-southeast1.fireba
   -H "content-type: application/json" \
   -d "{\"lat\":1.487,\"lng\":124.835,\"spd\":40,\"bat\":85,\"sat\":9,\"st\":\"rented\"}"
 ```
+
+Kalau balasannya menampilkan JSON yang sama = **berhasil**. Cek hasilnya muncul di
+dashboard: **https://icast-her.vercel.app**
+
+> Catatan: `id` unit cukup di URL (tak perlu di body). Belum perlu autentikasi.
